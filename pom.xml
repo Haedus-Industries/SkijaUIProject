@@ -3,24 +3,87 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>org.example</groupId>
-    <artifactId>SkijaUIProject</artifactId>
+    <groupId>com.haedus</groupId>
+    <artifactId>skija-ui</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <!-- Use Java 17 or later to compile the project.  Adjust the
+         version as needed if you target a different JDK. -->
     <properties>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lwjgl.version>3.3.2</lwjgl.version>
+        <skija.version>0.116.4</skija.version>
     </properties>
 
     <dependencies>
+
+        <!-- https://mvnrepository.com/artifact/io.github.humbleui/skija-shared -->
+        <dependency>
+            <groupId>io.github.humbleui</groupId>
+            <artifactId>skija-shared</artifactId>
+            <version>0.116.4</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/io.github.humbleui/skija-windows-x64 -->
         <dependency>
             <groupId>io.github.humbleui</groupId>
             <artifactId>skija-windows-x64</artifactId>
             <version>0.116.4</version>
         </dependency>
+
+        <!-- LWJGL core and OpenGL/GLFW bindings for window creation and context -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>3.3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>3.3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>3.3.6</version>
+        </dependency>
+
+        <!-- Native libraries for Windows.  If targeting another OS,
+             replace `windows` with `linux`, `macos`, etc. -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>3.3.6</version>
+            <classifier>natives-windows</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>3.3.6</version>
+            <classifier>natives-windows</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>3.3.6</version>
+            <classifier>natives-windows</classifier>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

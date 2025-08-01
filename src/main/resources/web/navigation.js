@@ -152,6 +152,37 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Settings container not found.");
     }
 
+    // Add event delegation for config groups in submenu-4
+    const configsContainer = document.querySelector("#submenu-4 .configs-container");
+    if (configsContainer) {
+        configsContainer.addEventListener("click", function (e) {
+            // Check if the click came from or inside a .setting-group-title element
+            const groupTitle = e.target.closest(".setting-group-title");
+            if (!groupTitle || !configsContainer.contains(groupTitle)) return;
+
+            console.log("Config group clicked:", groupTitle);
+            const settingGroup = groupTitle.parentElement;
+            const settingWrapper = settingGroup.querySelector(".setting-wrapper");
+
+            console.log("Selected config group:", settingGroup);
+            console.log("Selected config wrapper:", settingWrapper);
+
+            if (settingWrapper) {
+                settingGroup.classList.toggle("expanded");
+                settingWrapper.classList.toggle("expanded");
+                const icon = groupTitle.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("icon-chevron-up");
+                }
+                adjustNavigationHeight(4); // Update navigation height for submenu-4
+            } else {
+                console.error("Config wrapper not found for", settingGroup);
+            }
+        });
+    } else {
+        console.error("Configs container not found.");
+    }
+
     function createModuleElement({ title, description, link = "/", enabled = false }) {
         const template = document.getElementById("module-template");
         if (!template) {
@@ -307,6 +338,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const newSetting = createSettingElement(settingObj);
         wrapper.appendChild(newSetting);
+    }
+
+    function createConfigGroup(groupTitle, settingsArray = []) {
+        const template = document.getElementById("setting-group-template");
+        if (!template) {
+            console.error("Config group template not found");
+            return null;
+        }
+        const clone = document.importNode(template.content, true);
+        // Set the group title
+        const titleEl = clone.querySelector(".setting-group-title .Title-text");
+        if (titleEl) titleEl.textContent = groupTitle;
+        // Add each setting element if provided
+        const wrapper = clone.querySelector(".setting-wrapper");
+        if (wrapper && Array.isArray(settingsArray)) {
+            settingsArray.forEach(settingObj => {
+                const settingEl = createModuleSetting(settingObj);
+                if (settingEl) wrapper.appendChild(settingEl);
+            });
+        }
+        return clone.firstElementChild;
+    }
+
+    function addConfigGroup(groupTitle, settingsArray = []) {
+        const configGroup = createConfigGroup(groupTitle, settingsArray);
+        if (!configGroup) return;
+        
+        const configsContainer = document.querySelector("#submenu-4 .configs-container");
+        if (!configsContainer) {
+            console.error("Configs container not found.");
+            return;
+        }
+        
+        configsContainer.appendChild(configGroup);
     }
 
     // Store module settings data
@@ -527,7 +592,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 templateId = 'checkbox-setting-template';
                 break;
             case 'radio':
-                templateId = 'radio-setting-template';
+            case 'dropdown':
+                templateId = 'dropdown-setting-template';
                 break;
             case 'range':
                 templateId = 'range-setting-template';
@@ -558,32 +624,21 @@ document.addEventListener("DOMContentLoaded", function () {
         if (type === 'checkbox') {
             const checkbox = clone.querySelector('input[type="checkbox"]');
             if (checkbox) checkbox.checked = !!value;
-        } else if (type === 'radio') {
-            const container = clone.querySelector('.radio-inputs');
-            if (container) {
-                container.innerHTML = '';
-                const radioName = options.name || 'radio';
-                if (options.options && options.options.length) {
-                    options.options.forEach((option, index) => {
-                        const label = document.createElement('label');
-                        label.classList.add('radio');
-                        const input = document.createElement('input');
-                        input.type = 'radio';
-                        input.name = radioName;
-                        input.value = option.value;
-                        if (value !== undefined) {
-                            if (option.value === value) input.checked = true;
-                        } else if (index === 0) {
-                            input.checked = true;
-                        }
-                        const span = document.createElement('span');
-                        span.classList.add('name');
-                        span.textContent = option.label;
-                        label.appendChild(input);
-                        label.appendChild(span);
-                        container.appendChild(label);
-                    });
-                }
+        } else if (type === 'radio' || type === 'dropdown') {
+            const select = clone.querySelector('.dropdown-select');
+            if (select && options.options && options.options.length) {
+                select.innerHTML = '';
+                options.options.forEach((option, index) => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.label;
+                    if (value !== undefined) {
+                        if (option.value === value) optionElement.selected = true;
+                    } else if (index === 0) {
+                        optionElement.selected = true;
+                    }
+                    select.appendChild(optionElement);
+                });
             }
         } else if (type === 'range') {
             const rangeInput = clone.querySelector('input[type="range"]');
@@ -848,6 +903,8 @@ document.addEventListener("DOMContentLoaded", function () {
         createSettingGroup: createSettingGroup,
         createSettingElement: createSettingElement,
         addSettingToGroup: addSettingToGroup,
+        createConfigGroup: createConfigGroup,
+        addConfigGroup: addConfigGroup,
         createModule: createModule,
         createModuleSetting: createModuleSetting,
         showModuleSettings: showModuleSettings,
@@ -959,12 +1016,10 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Clear config container but preserve existing structure
         if (configContainer) {
-            const existingColumns = configContainer.querySelectorAll('.column');
-            existingColumns.forEach(column => {
-                if (!column.classList.contains('column-1') && !column.classList.contains('column-2') && !column.classList.contains('column-4')) {
-                    column.remove();
-                }
-            });
+            const configsContainer = configContainer.querySelector('.configs-container');
+            if (configsContainer) {
+                configsContainer.innerHTML = '';
+            }
         }
         
         // Generate test categories with modules
@@ -1151,6 +1206,47 @@ document.addEventListener("DOMContentLoaded", function () {
                     addPinnedModule(module.name, module.description);
                 }
             });
+        });
+        
+        // Generate test config groups for submenu-4
+        const testConfigGroups = [
+            {
+                title: "General Settings",
+                settings: [
+                    { type: 'checkbox', title: "Auto Save", description: "Automatically save configuration changes", value: true },
+                    { type: 'dropdown', title: "Theme", description: "Application color theme", value: "Dark", options: { name: "theme", options: [{ label: "Light", value: "Light" }, { label: "Dark", value: "Dark" }, { label: "Auto", value: "Auto" }] } },
+                    { type: 'dropdown', title: "Language", description: "Interface language", value: "English", options: { name: "language", options: [{ label: "English", value: "English" }, { label: "Spanish", value: "Spanish" }, { label: "French", value: "French" }] } }
+                ]
+            },
+            {
+                title: "Performance",
+                settings: [
+                    { type: 'range', title: "Max FPS", description: "Maximum frames per second limit", value: 144, options: { min: 30, max: 240, step: 1 } },
+                    { type: 'range', title: "Memory Usage", description: "Maximum memory usage limit (GB)", value: 2, options: { min: 1, max: 8, step: 1 } },
+                    { type: 'dropdown', title: "CPU Priority", description: "Process CPU priority level", value: "Normal", options: { name: "cpu-priority", options: [{ label: "Low", value: "Low" }, { label: "Normal", value: "Normal" }, { label: "High", value: "High" }] } }
+                ]
+            },
+            {
+                title: "Graphics",
+                settings: [
+                    { type: 'dropdown', title: "Anti-Aliasing", description: "Anti-aliasing quality setting", value: "MSAA 4x", options: { name: "anti-aliasing", options: [{ label: "Off", value: "Off" }, { label: "MSAA 2x", value: "MSAA 2x" }, { label: "MSAA 4x", value: "MSAA 4x" }, { label: "MSAA 8x", value: "MSAA 8x" }] } },
+                    { type: 'range', title: "Render Distance", description: "Maximum render distance (chunks)", value: 16, options: { min: 2, max: 32, step: 2 } },
+                    { type: 'checkbox', title: "VSync", description: "Vertical synchronization", value: false }
+                ]
+            },
+            {
+                title: "Security",
+                settings: [
+                    { type: 'checkbox', title: "Auto Update", description: "Automatically check for updates", value: true },
+                    { type: 'checkbox', title: "Telemetry", description: "Send usage data for improvement", value: false },
+                    { type: 'checkbox', title: "Debug Mode", description: "Enable advanced debugging features", value: false }
+                ]
+            }
+        ];
+
+        // Add config groups to submenu-4
+        testConfigGroups.forEach(group => {
+            addConfigGroup(group.title, group.settings);
         });
         
         console.log("Test data generation complete!");

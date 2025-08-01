@@ -72,6 +72,18 @@
     </div>
 </template>
 
+<template id="dropdown-setting-template">
+    <div class="setting">
+        <div class="setting-info">
+            <p class="setting-title"></p>
+            <p class="setting-description"></p>
+        </div>
+        <select class="dropdown-select">
+            <!-- Options will be generated dynamically -->
+        </select>
+    </div>
+</template>
+
 <template id="module-template">
     <div class="module">
         <a href="">
@@ -280,7 +292,12 @@
                     </div>
 
                     <div id="submenu-4" class="submenu columns-4">
-                        <div class="column column-1 ">
+                        <div class="configs-container">
+                            <!-- Config groups will be dynamically added here -->
+                        </div>
+                        
+                        <div class="columns-wrapper">
+                            <div class="column column-1 ">
                             <p class="col-title Title-text">Learn</p>
 
                             <div class="module">
@@ -347,6 +364,7 @@
                                     <i class="icon-arrow-narrow-right"></i>
                                 </a>
                             </div>
+                        </div>
 
                         </div>
                     </div>
